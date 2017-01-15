@@ -14,7 +14,7 @@ GetPID:
   ; Implementation goes here...
   mov eax, 0x14
   int 0x80
-  mov ebx, [esp+8]
+  mov ebx, [esp+4]
   mov [ebx], eax
   ret
 
@@ -32,4 +32,16 @@ CustomExit:
 global XORString
 XORString:
   ; Implementation goes here
+  ; !!!SAVE AND RESTORE REGISTERS!!!
+  mov eax, [esp+8]    ; length of string
+  mov ebx, [esp+4]    ; pointer to string
+  mov ecx, [esp+12]   ; value to use in xor
+  mov edx, 0          ; counter
+
+XORLoop:
+  xor [ebx], ecx
+  add ebx, 4
+  add edx, 1
+  cmp edx, eax
+  jl XORLoop
   ret
