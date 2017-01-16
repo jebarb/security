@@ -21,10 +21,11 @@ void print_hex(uint8_t *buffer, size_t num_bytes) {
   //
   // INSERT YOUR CODE HERE
   //
-  int i;
-  for (i = num_bytes + 1; i > 0; --i) {
+  // There is an off by one (or two) error here.
+  // The first and sometimes second byte is not being printed here,
+  // but is being printed with xxd
+  for (int i = num_bytes; i > 0; --i)
     printf("%x", buffer[num_bytes - i]);
-  }
 }
 
 int bin2hex(FILE *f) {
