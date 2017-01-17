@@ -45,23 +45,23 @@ CustomExit:
 global XORString
 XORString:
   ; Implementation goes here
-  push ebp            ; save ebp on stack
-  mov ebp, esp        ; save stack pointer in ebp
-  sub esp, 16         ; make space for 4 local variables
-  push ebx            ; save ebx
-  mov eax, [ebp+12]   ; length of string
-  mov ebx, [ebp+8]    ; pointer to string
-  mov edx, [ebp+16]   ; value to use in xor
-  mov ecx, 0          ; counter
+  push ebp                  ; save ebp on stack
+  mov ebp, esp              ; save stack pointer in ebp
+  sub esp, 12               ; make space for 4 local variables
+  push ebx                  ; save ebx
+  mov ebx, [ebp+8]          ; pointer to string
+  mov edx, [ebp+16]         ; value to use in xor
+  mov eax, [ebp+12]         ; length of string, must be last due to jz
 
 XORLoop:
-  xor [ebx], edx      ; xor first 4 bytes at pointer
-  add ebx, 4          ; increment pointer by 4 bytes
-  add ecx, 1          ; increment counter
-  cmp ecx, eax        ; while ecx is
-  jl XORLoop          ; less than eax
+  jz XOREnd                 ; exit loop at 0
+  xor [ebx + eax - 1], edx  ; xor first byte at pointer
+  sub eax, 1                ; increment counter
+  jmp XORLoop               ; loop
 
-  pop ebx             ; restore ebx
-  mov esp, ebp        ; restore stack pointer
-  pop ebp             ; restore ebp from stack
+XOREnd:
+  mov eax, [ebp+12]         ; return num bytes XORed
+  pop ebx                   ; restore ebx
+  mov esp, ebp              ; restore stack pointer
+  pop ebp                   ; restore ebp from stack
   ret

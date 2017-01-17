@@ -13,9 +13,11 @@ int GetCurrentDirectoryContents(char **names, int max_files) {
   struct dirent *ent;
   int num_files;
 
+  // get and open cwd, return errno on fail
   if (getcwd(cwd, sizeof(cwd)) == NULL || (dir = opendir(cwd)) == NULL)
     return errno;
 
+  // for each file in cwd, malloc and copy name to names
   for (num_files = 0; (ent = readdir(dir)) != NULL && num_files < max_files; ++num_files) {
     if ((names[num_files] = malloc(sizeof(ent->d_name))) == NULL)
       return errno;
