@@ -3,19 +3,32 @@
 global GetCPUFamily
 GetCPUFamily:
   ; Implementation goes here...
-  mov eax, 1
-  CPUID
-  shl eax, 20
-  shr eax, 28
+  push ebp           ; save ebp on stack
+  mov ebp, esp       ; save stack pointer in ebp
+  push ebx           ; save ebx
+  mov eax, 1         ; first arg for CPUID to get family and other info
+  CPUID              ; get CPUID info
+  shl eax, 20        ; get rid of exta
+  shr eax, 28        ; info from CPUID
+  pop ebx            ; restore ebx
+  mov esp, ebp       ; restore stack pointer
+  pop ebp            ; restore ebp from stack
   ret
 
 global GetPID
 GetPID:
   ; Implementation goes here...
-  mov eax, 0x14
-  int 0x80
-  mov ebx, [esp+4]
-  mov [ebx], eax
+  push ebp           ; save ebp on stack
+  mov ebp, esp       ; save esp in ebp
+  sub esp, 4         ; make space for one local variable
+  push ebx           ; save ebx
+  mov eax, 0x14      ; getpid syscall
+  int 0x80           ; execute syscall
+  mov ebx, [ebp+8]   ; get first argument
+  mov [ebx], eax     ; store PID at pointer
+  pop ebx            ; restore ebx
+  mov esp, ebp       ; restore stack pointer
+  pop ebp            ; restore ebp from stack
   ret
 
 global CustomExit
@@ -32,16 +45,23 @@ CustomExit:
 global XORString
 XORString:
   ; Implementation goes here
-  ; !!!SAVE AND RESTORE REGISTERS!!!
-  mov eax, [esp+8]    ; length of string
-  mov ebx, [esp+4]    ; pointer to string
-  mov ecx, [esp+12]   ; value to use in xor
-  mov edx, 0          ; counter
+  push ebp            ; save ebp on stack
+  mov ebp, esp        ; save stack pointer in ebp
+  sub esp, 16         ; make space for 4 local variables
+  push ebx            ; save ebx
+  mov eax, [ebp+12]   ; length of string
+  mov ebx, [ebp+8]    ; pointer to string
+  mov edx, [ebp+16]   ; value to use in xor
+  mov ecx, 0          ; counter
 
 XORLoop:
-  xor [ebx], ecx
-  add ebx, 4
-  add edx, 1
-  cmp edx, eax
-  jl XORLoop
+  xor [ebx], edx      ; xor first 4 bytes at pointer
+  add ebx, 4          ; increment pointer by 4 bytes
+  add ecx, 1          ; increment counter
+  cmp ecx, eax        ; while ecx is
+  jl XORLoop          ; less than eax
+
+  pop ebx             ; restore ebx
+  mov esp, ebp        ; restore stack pointer
+  pop ebp             ; restore ebp from stack
   ret
