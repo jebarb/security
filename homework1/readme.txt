@@ -19,10 +19,14 @@ a memory dump. I then utilized a volatility cheatsheet [4] to find the correct
 registry entry. Initially, I had trouble logging in, but it turned out there 
 was a typo in the password. I downloaded the updated VM image and used a hacky 
 script I made as I extracted the password several times while trying to 
-diagnose the issue (extractpass.sh in homework1 folder).
+diagnose the issue (extractpass.sh in homework1 folder). While playing around
+with the script, I noticed that sometimes the registry entry would not show up,
+with or without use of the script. Since the VM takes so long to boot, I didn't
+attempt to diagnose the problem, but it seems to be related to uptime before
+dumping the memory.
 
 For the next exercise, I first got the dump off the VM because I'm currently 
-using a weak laptop that can't seem to run a VM properly. I then looked through 
+using a weak laptop that doesn't have much memory. I then looked through 
 the volatility commands and found the 'cmdscan' option which gave me the 
 location of 'Elliot.exe' which I ran as instructed.
 
