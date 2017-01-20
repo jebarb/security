@@ -50,13 +50,14 @@ XORString:
   sub esp, 12               ; make space for 4 local variables
   push ebx                  ; save ebx
   mov ebx, [ebp+8]          ; pointer to string
+  mov eax, [ebp+12]         ; length of string
   mov edx, [ebp+16]         ; value to use in xor
-  mov eax, [ebp+12]         ; length of string, must be last due to jz
 
 XORLoop:
+  cmp eax, 0
   jz XOREnd                 ; exit loop at 0
   xor [ebx + eax - 1], edx  ; xor first byte at pointer
-  sub eax, 1                ; increment counter
+  sub eax, 1                ; decrement counter
   jmp XORLoop               ; loop
 
 XOREnd:

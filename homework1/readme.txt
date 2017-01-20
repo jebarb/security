@@ -4,12 +4,18 @@ I've only had experience with MIPS, so I first searched for a good x86 quick
 start guide [1]. After reading up on calling conventions, registers, syntax,
 etc., I started on the first task, using the wikipedia page on CPUID [2] as
 a reference. The first two tasks went smoothly, but I had difficulty with the
-third task. I wasn't able to XOR with keys larger than 127, but it turns out
-the issue was a bug in the tast code. The key was being cast to a char when it
-should have been cast to an unsigned char.
+third task. I wasn't able to XOR with keys larger than 127, which Jan and I
+decided was a bug in the test code where the key was being cast to a char when
+it should have been cast to an unsigned char, but I then realized my assembly
+function was skipping by 4 bytes each loop iteration instead of by 1. I was
+able to change the (unsigned char) back to a (char) and the function then
+worked as expected. I did notice that the xor_key wasn't being checked after
+being input by the user but was being checked when in argv, so I added a check
+for the former.
 
-The final task ended up being easier than the third for me. I just looked up
-documentation for dirent.h and everything went smoothly from there forward.
+The final task ended up being easier than the third for me as I'm fairly
+comfortable with C. I just looked up documentation for dirent.h and everything
+went smoothly from there forward.
 
 
 Forensics:

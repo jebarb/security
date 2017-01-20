@@ -33,7 +33,6 @@ int main(int argc, char **argv) {
   GetPID(&my_pid);
   printf("My PID is %d.\n", my_pid);
 
-  printf("argc: %d\n", argc);
   // Print the contents of the current directory
   file_count = GetCurrentDirectoryContents(names, MAX_FILES);
   for (i = 0; i < file_count; i++) {
@@ -51,6 +50,8 @@ int main(int argc, char **argv) {
     test_string[strcspn(test_string, "\n")] = 0;
     printf("Please enter the key (0-255)\n");
     scanf("%d", &xor_key);
+    // add check for xor key
+    if (xor_key < 0 || xor_key >255) exit(-1);
   }
   else {
     test_string = strndup(argv[1],256);
@@ -61,7 +62,7 @@ int main(int argc, char **argv) {
   printf("Before XOR: %s\n", test_string);
   printf("Hex representation:\n");
   print_hex_string(test_string, strlen(test_string));
-  retval = XORString(test_string,strlen(test_string),(unsigned char) xor_key);
+  retval = XORString(test_string,strlen(test_string),(char) xor_key);
   printf("XORed %d bytes with key 0x%x\n",retval, xor_key);
   printf("String representation: %s\n", test_string);
   printf("Hex representation:\n");
