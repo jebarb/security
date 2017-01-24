@@ -3,6 +3,7 @@
 global GetCPUFamily
 GetCPUFamily:
   ; Implementation goes here...
+  ; Could have used shift+and instead of two shifts
   push ebp           ; save ebp on stack
   mov ebp, esp       ; save stack pointer in ebp
   push ebx           ; save ebx
@@ -52,6 +53,8 @@ XORString:
   mov ebx, [ebp+8]          ; pointer to string
   mov eax, [ebp+12]         ; length of string
   mov edx, [ebp+16]         ; value to use in xor
+
+  ; could use lodsb, stosb, inc in loop
 
 XORLoop:
   cmp eax, 0
