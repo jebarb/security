@@ -1,4 +1,5 @@
 import fileinput
+import re
 
 
 tf = {
@@ -25,9 +26,10 @@ tf = {
         'u': ['u', 'U'],
         'v': ['v', 'V'],
         'w': ['w', 'W'],
-        'x': ['x', 'X'],
+        'x': ['x'],
         'y': ['y', 'Y', 'u'],
-        'z': ['z', 'Z']
+        'z': ['z']
+
         }
 
 
@@ -43,10 +45,11 @@ def transform_string(string, buf, idx):
 
 def process_file():  # process input and output
     for line in fileinput.input():
-        line = line.split()
+        line = re.split('[ _\-,.?"\']', line)
         mnemonic = ''
         for word in line:
-            word = word.lstrip('_-,.?"\'')
+            if word == '':
+                continue
             mnemonic = ''.join([mnemonic, word[0]])
             if len(mnemonic) == 8:
                 break

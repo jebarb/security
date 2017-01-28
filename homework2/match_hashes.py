@@ -7,16 +7,17 @@ def process_hashes():
     if len(sys.argv) < 3:
         print("FEED ME MORE ARGUMENTS")
         return
-    yours = {}
-    for line in fileinput.input(sys.argv[2]):
-        yours[line.rstrip('\n')] = line.rstrip('\n')
+    mine = set([hashlib.sha1(line.rstrip('\n').encode("utf-8")).hexdigest()
+            for line in fileinput.input(sys.argv[1])])
     matches = 0
-    for f in fileinput.input(sys.argv[1]):
-        if hashlib.sha1(f.rstrip('\n').encode("utf-8")).hexdigest() in yours:
+    given = 0
+    for f in fileinput.input(sys.argv[2]):
+        given += 1
+        if f.rstrip('\n') in mine:
             matches += 1
-    print("Number of given hashes: " + str(len(yours)))
+    print("Number of given hashes: " + str(given))
     print("Number of matches:      " + str(matches))
-    print("Hit percentage:         " + str(matches/len(yours)*100) + "%")
+    print("Coverage:               " + str(matches/given*100) + "%")
 
 
 process_hashes()
