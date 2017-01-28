@@ -29,10 +29,7 @@ tf = {
         'x': ['x'],
         'y': ['y', 'Y', 'u'],
         'z': ['z']
-
         }
-
-
 
 
 def transform_string(string, buf, idx):
@@ -45,7 +42,8 @@ def transform_string(string, buf, idx):
 
 def process_file():  # process input and output
     for line in fileinput.input():
-        line = re.split('[ _\-,.?"\']', line)
+        line = re.sub('[^a-zA-Z]+', ' ', line)
+        line = line.split()
         mnemonic = ''
         for word in line:
             if word == '':

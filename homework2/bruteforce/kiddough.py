@@ -11,7 +11,7 @@ seedin = "input.txt"
 num_hashes = 0
 matches = 0
 speed = 1
-yours = [line.rstrip('\n') for line in fileinput.input(hashin)]
+yours = set([line.rstrip('\n') for line in fileinput.input(hashin)])
 goal = len(yours)
 inputs = []
 tf = {
@@ -42,7 +42,7 @@ tf = {
         'y': ['y', 'Y', 'u'],
         'z': ['z'],
         }
-#for i in range(97, 123):  # empty predefined subs
+# for i in range(97, 123):  # empty predefined subs
 #    tf[chr(i)] = tf[chr(i)][:speed]
 found = copy.deepcopy(tf)
 orig = copy.deepcopy(tf)
@@ -53,8 +53,9 @@ def transform_string(string, buf, idx, mine):
     for c in tf[string[idx]]:
         if idx == 7:
             num_hashes += 1
-            mine[hashlib.sha1(
-                ''.join([buf, c]).encode('utf-8')).hexdigest()] = ''
+            tmp = hashlib.sha1(
+                ''.join([buf, c]).encode('utf-8')).hexdigest()
+            mine[tmp] = ''
         else:
             transform_string(string, ''.join([buf, c]), idx+1, mine)
 
@@ -62,10 +63,11 @@ def transform_string(string, buf, idx, mine):
 def process_file():
     global matches, inputs
     for line in fileinput.input(seedin):
-        line = re.sub('[^a-zA-Z]+', ' ', line)
+        # line = re.sub('[^a-zA-Z]+', ' ', line)
         line = line.split()
         mnemonic = ''
         for word in line:
+            word = word.lstrip('["_]')
             if word == '':
                 continue
             mnemonic = ''.join([mnemonic, word[0].lower()])
@@ -88,6 +90,7 @@ def process_inputs():
 
 def print_results():
     new_percent = matches/goal*100
+    print("Result dict:")
     for ltr, val in tf.items():
         print("'" + ltr + "': ", end="")
         print(val, end="")
@@ -97,11 +100,10 @@ def print_results():
     print("Calculated hashes:  " + str(num_hashes))
     print("Matches:            " + str(matches))
     print("Coverage:           " + str(int(new_percent)) + "%\n")
-    print("Result dict:")
 
 
 def main():
-    global yours, num_hashes, matches, tf, speed, found, orig
+    global yours, num_hashes, matches, tf, speed, found, orig, goal
     offset = 0
     process_file()
     while True:  # build new dict
@@ -120,10 +122,13 @@ def main():
         while True:  # test substitutions
             num_hashes = 0
             matches = 0
-            if char not in tf[letter]:  # save good subs
+            if char not in tf[letter]:
                 tf[letter].append(char)
                 process_inputs()
                 new_percent = matches/goal*100
+                if len(yours) > goal:
+                    goal = len(yours)
+                    print("  Letter, substitution: " + letter + ", " + char)
                 if new_percent > base_percent and char not in found[letter]:
                     new_char = True
                     found[letter].append(char)
