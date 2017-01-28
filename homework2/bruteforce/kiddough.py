@@ -3,10 +3,13 @@ import hashlib
 import copy
 
 
+slowness = 1
+hashin = "hash.in"
+seedin = "input.txt"
 num_hashes = 0
 matches = 0
 notmine = []
-for line in fileinput.input("hash.in"):
+for line in fileinput.input(hashin):
     notmine.append(line.rstrip('\n'))
 yours = set(notmine)
 
@@ -41,7 +44,8 @@ tf = {
         }
 
 for i in range(97, 122):
-    tf[chr(i)] = tf[chr(i)][:1]
+    if len(tf[chr(i)]) > slowness:
+        tf[chr(i)] = tf[chr(i)][:slowness]
 
 found = copy.deepcopy(tf)
 
@@ -62,7 +66,7 @@ def transform_string(string, buf, idx):
 
 
 def process_file():
-    for line in fileinput.input("input.txt"):
+    for line in fileinput.input(seedin):
         line = line.split()
         mnemonic = ''
         for word in line:
@@ -115,10 +119,9 @@ def main():
                 print("Matches:            " + str(matches))
                 print("Hit percentage:     " + str(int(new_percent)) + "\n")
                 for ltr, val in tf.items():
-                    print("'" + ltr + "': [", end="")
-                    for ltr2 in val:
-                        print("'" + ltr2, end="', ")
-                    print("],")
+                    print("'" + ltr + "': ", end="")
+                    print(val, end="")
+                    print(",")
                 return
 
 
