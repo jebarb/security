@@ -1,28 +1,37 @@
 import fileinput
 import hashlib
+import copy
+
+
+num_hashes = 0
+matches = 0
+notmine = []
+for line in fileinput.input("hash.in"):
+    notmine.append(line.rstrip('\n'))
+yours = set(notmine)
 
 
 tf = {
-        'a': ['a', 'A', '4', '@', '&'],
+        'a': ['a', 'A', '&'],
         'b': ['b', 'B', '8'],
         'c': ['c', 'C'],
         'd': ['d', 'D'],
-        'e': ['e', 'E', '3'],
+        'e': ['e', 'E'],
         'f': ['f', 'F'],
         'g': ['g', 'G'],
         'h': ['h', 'H'],
         'i': ['i', 'I', '1'],
         'j': ['j', 'J'],
         'k': ['k', 'K'],
-        'l': ['l', 'L', '1'],
+        'l': ['l', 'L'],
         'm': ['m', 'M'],
         'n': ['n', 'N'],
         'o': ['o', 'O', '0'],
         'p': ['p', 'P'],
         'q': ['q', 'Q'],
         'r': ['r', 'R'],
-        's': ['s', 'S', '5', '$'],
-        't': ['t', 'T'],
+        's': ['s', 'S', '$'],
+        't': ['t', 'T', '2'],
         'u': ['u', 'U'],
         'v': ['v', 'V'],
         'w': ['w', 'W'],
@@ -31,31 +40,27 @@ tf = {
         'z': ['z', 'Z']
         }
 
+found = copy.deepcopy(tf)
+
 
 def transform_string(string, buf, idx, out):
+    global matches
+    global num_hashes
+    global yours
+    global tf
     for c in tf[string[idx].lower()]:
         if idx == 7:
-            out.write(''.join([buf, c]))
+            num_hashes += 1
+            if hashlib.sha1(''.join([buf, c]).encode('utf-8')).hexdigest() in yours:
+                matches += 1
         else:
             transform_string(string, ''.join([buf, c]), idx+1, out)
-    out.close()
 
 
 def process_hashes():
-    yours = {}
-    for line in fileinput.input("hash.in"):
-        yours[line.rstrip('\n')] = line.rstrip('\n')
     matches = 0
     for f in fileinput.input("hash.out"):
-        if hashlib.sha1(f.rstrip('\n').encode("utf-8")).hexdigest() in yours:
             matches += 1
-    res = open("results.txt")
-    res.write("Number of given hashes: " + str(len(yours)))
-    res.write("Number of matches:      " + str(matches))
-    res.write("Hit percentage:         " + str(matches/len(yours)*100) + "%\n")
-    res.write('')
-    return matches/len(yours)*100
-
 
 def process_file():  # process input and output
     for line in fileinput.input("input.txt"):
@@ -68,31 +73,56 @@ def process_file():  # process input and output
                 break
         if len(mnemonic) < 8:
             continue
-        transform_string(mnemonic, '', 0, open("hash.out", 'w'))
+        out = open("hash.out", 'w');
+        transform_string(mnemonic, '', 0, out)
+    out.close()
 
 
 def main():
+    global yours
+    global num_hashes
+    global matches
+    global tf
+    global found
     process_file()
-    prev_percent = process_hashes()
+    base_percent = matches/len(yours)*100
     letter = 'a'
     char = '!'
-    prev_percent = 0.0
     new_percent = 0.0
     while True:
-        tf[letter].append(char)
-        process_file()
-        new_percent = process_hashes()
-        if new_percent <= prev_percent:
+        matches = 0
+        num_hashes = 0
+        if char not in tf[letter]:
+            tf[letter].append(char)
+            process_file()
+            new_percent = matches/len(yours)*100
+            # if new_percent <= prev_percent:
             tf[letter].pop()
-        else:
-            print("Letter: " + letter)
-            print("Char: " + char)
-            print("Hit percentage: " + str(new_percent))
-            prev_percent = new_percent
-        if char > 126:
-            char = ' '
-            letter += letter
-            if letter > 122:
+            # else:
+            if new_percent > base_percent:
+                found[letter].append(char)
+                print("Letter: " + letter)
+                print("  Char: " + char)
+        char = chr(ord(char) + 1)
+        if ord(char) > 126:
+            char = '!'
+            letter = chr(ord(letter) + 1)
+            if ord(letter) > 122:
+                matches = 0
+                num_hashes = 0
+                tf = copy.deepcopy(found)
+                process_file()
+                new_percent = matches/len(yours)*100
+                print("\nNumber of given hashes:  " + str(len(yours)))
+                print("Number of hashes:        " + str(num_hashes))
+                print("Number of matches:       " + str(matches))
+                print("Hit percentage:          " + str(new_percent) + "\n")
+                for ltr, val in tf.items():
+                    print("Letter: " + ltr)
+                    print("  Subs: ", end="")
+                    for ltr2 in val:
+                        print(ltr2, end=" ")
+                    print('')
                 return
 
 
