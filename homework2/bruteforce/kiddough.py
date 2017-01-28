@@ -12,38 +12,41 @@ yours = set(notmine)
 
 
 tf = {
-        'a': ['a', 'A', '&'],
-        'b': ['b', 'B', '8'],
+        'a': ['a', 'A', '&', '*', '4', '@', 'v'],
+        'b': ['b', 'B', '8', '<'],
         'c': ['c', 'C'],
         'd': ['d', 'D'],
-        'e': ['e', 'E'],
-        'f': ['f', 'F'],
-        'g': ['g', 'G'],
+        'e': ['e', 'E', '3'],
+        'f': ['f', 'F', '<'],
+        'g': ['g', 'G', '`'],
         'h': ['h', 'H'],
-        'i': ['i', 'I', '1'],
+        'i': ['i', 'I', '1', '=', '>', '?'],
         'j': ['j', 'J'],
         'k': ['k', 'K'],
-        'l': ['l', 'L'],
+        'l': ['l', 'L', '1', '~'],
         'm': ['m', 'M'],
-        'n': ['n', 'N'],
-        'o': ['o', 'O', '0'],
+        'n': ['n', 'N', '!'],
+        'o': ['o', 'O', '0', '1', '|'],
         'p': ['p', 'P'],
         'q': ['q', 'Q'],
         'r': ['r', 'R'],
-        's': ['s', 'S', '$'],
-        't': ['t', 'T', '2'],
+        's': ['s', 'S', '$', '5', 'c'],
+        't': ['t', 'T', '2', '7', '8', 'B', 'b'],
         'u': ['u', 'U'],
         'v': ['v', 'V'],
         'w': ['w', 'W'],
         'x': ['x', 'X'],
-        'y': ['y', 'Y'],
+        'y': ['y', 'Y', 'u'],
         'z': ['z', 'Z']
         }
+
+for i in range(97, 122):
+    tf[chr(i)] = tf[chr(i)][:1]
 
 found = copy.deepcopy(tf)
 
 
-def transform_string(string, buf, idx, out):
+def transform_string(string, buf, idx):
     global matches
     global num_hashes
     global yours
@@ -51,18 +54,14 @@ def transform_string(string, buf, idx, out):
     for c in tf[string[idx].lower()]:
         if idx == 7:
             num_hashes += 1
-            if hashlib.sha1(''.join([buf, c]).encode('utf-8')).hexdigest() in yours:
-                matches += 1
+            if hashlib.sha1(''.join([buf, c]).encode('utf-8')).hexdigest() \
+                    in yours:
+                        matches += 1
         else:
-            transform_string(string, ''.join([buf, c]), idx+1, out)
+            transform_string(string, ''.join([buf, c]), idx+1)
 
 
-def process_hashes():
-    matches = 0
-    for f in fileinput.input("hash.out"):
-            matches += 1
-
-def process_file():  # process input and output
+def process_file():
     for line in fileinput.input("input.txt"):
         line = line.split()
         mnemonic = ''
@@ -73,9 +72,7 @@ def process_file():  # process input and output
                 break
         if len(mnemonic) < 8:
             continue
-        out = open("hash.out", 'w');
-        transform_string(mnemonic, '', 0, out)
-    out.close()
+        transform_string(mnemonic, '', 0)
 
 
 def main():
@@ -113,16 +110,15 @@ def main():
                 tf = copy.deepcopy(found)
                 process_file()
                 new_percent = matches/len(yours)*100
-                print("\nNumber of given hashes:  " + str(len(yours)))
-                print("Number of hashes:        " + str(num_hashes))
-                print("Number of matches:       " + str(matches))
-                print("Hit percentage:          " + str(new_percent) + "\n")
+                print("\nGiven hashes:       " + str(len(yours)))
+                print("Calculated hashes:  " + str(num_hashes))
+                print("Matches:            " + str(matches))
+                print("Hit percentage:     " + str(int(new_percent)) + "\n")
                 for ltr, val in tf.items():
-                    print("Letter: " + ltr)
-                    print("  Subs: ", end="")
+                    print("'" + ltr + "': [", end="")
                     for ltr2 in val:
-                        print(ltr2, end=" ")
-                    print('')
+                        print("'" + ltr2, end="', ")
+                    print("],")
                 return
 
 
