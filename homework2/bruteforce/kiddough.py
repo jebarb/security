@@ -3,7 +3,7 @@ import hashlib
 import copy
 
 
-speed = 1
+speed = 2
 hashin = "hash.in"
 seedin = "input.txt"
 num_hashes = 0
@@ -84,13 +84,10 @@ def main():
     global found
     global speed
     count = 0
-    exit = True
-    slowdown = True
     while True:
+        exit = True
         print("\nInput:")
         for i in range(97, 122):
-            if len(tf[chr(i)]) >= speed:
-                slowdown = False
             if len(tf[chr(i)]) >= (speed+count):
                 exit = False
                 tf[chr(i)] = tf[chr(i)][count:speed+count]
@@ -100,9 +97,6 @@ def main():
         print("")
         if exit:
             return
-        if slowdown:
-            speed += 1
-            continue
         count += 1
         process_file()
         base_percent = matches/len(yours)*100
@@ -120,6 +114,13 @@ def main():
                     found[letter].append(char)
                     print("Letter: " + letter)
                     print("  Char: " + char)
+                if base_percent == 100:
+                    print("SUCCESS!!")
+                    for ltr, val in tf.items():
+                        print("'" + ltr + "': ", end="")
+                        print(val, end="")
+                        print(",")
+                    return
                 tf[letter].pop()
             char = chr(ord(char) + 1)
             if ord(char) > 126:
@@ -143,6 +144,9 @@ def main():
                         print("'" + ltr + "': ", end="")
                         print(val, end="")
                         print(",")
+                    if new_percent == 100:
+                        print("SUCCESS!!")
+                        return
                     break
 
 
