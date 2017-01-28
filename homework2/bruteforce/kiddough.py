@@ -3,7 +3,7 @@ import hashlib
 import copy
 
 
-slowness = 1
+speed = 1
 hashin = "hash.in"
 seedin = "input.txt"
 num_hashes = 0
@@ -43,9 +43,6 @@ tf = {
         'z': ['z', 'Z']
         }
 
-for i in range(97, 122):
-    if len(tf[chr(i)]) > slowness:
-        tf[chr(i)] = tf[chr(i)][:slowness]
 
 found = copy.deepcopy(tf)
 
@@ -85,44 +82,68 @@ def main():
     global matches
     global tf
     global found
-    process_file()
-    base_percent = matches/len(yours)*100
-    letter = 'a'
-    char = '!'
-    new_percent = 0.0
+    global speed
+    count = 0
+    exit = True
+    slowdown = True
     while True:
-        matches = 0
-        num_hashes = 0
-        if char not in tf[letter]:
-            tf[letter].append(char)
-            process_file()
-            new_percent = matches/len(yours)*100
-            # if new_percent <= prev_percent:
-            tf[letter].pop()
-            # else:
-            if new_percent > base_percent:
-                found[letter].append(char)
-                print("Letter: " + letter)
-                print("  Char: " + char)
-        char = chr(ord(char) + 1)
-        if ord(char) > 126:
-            char = '!'
-            letter = chr(ord(letter) + 1)
-            if ord(letter) > 122:
-                matches = 0
-                num_hashes = 0
-                tf = copy.deepcopy(found)
+        print("\nInput:")
+        for i in range(97, 122):
+            if len(tf[chr(i)]) >= speed:
+                slowdown = False
+            if len(tf[chr(i)]) >= (speed+count):
+                exit = False
+                tf[chr(i)] = tf[chr(i)][count:speed+count]
+            else:
+                tf[chr(i)] = tf[chr(i)][:speed]
+            print(tf[chr(i)])
+        print("")
+        if exit:
+            return
+        if slowdown:
+            speed += 1
+            continue
+        count += 1
+        process_file()
+        base_percent = matches/len(yours)*100
+        letter = 'a'
+        char = '!'
+        new_percent = 0.0
+        while True:
+            matches = 0
+            num_hashes = 0
+            if char not in tf[letter]:
+                tf[letter].append(char)
                 process_file()
                 new_percent = matches/len(yours)*100
-                print("\nGiven hashes:       " + str(len(yours)))
-                print("Calculated hashes:  " + str(num_hashes))
-                print("Matches:            " + str(matches))
-                print("Hit percentage:     " + str(int(new_percent)) + "\n")
-                for ltr, val in tf.items():
-                    print("'" + ltr + "': ", end="")
-                    print(val, end="")
-                    print(",")
-                return
+                if new_percent > base_percent and char not in found[letter]:
+                    found[letter].append(char)
+                    print("Letter: " + letter)
+                    print("  Char: " + char)
+                tf[letter].pop()
+            char = chr(ord(char) + 1)
+            if ord(char) > 126:
+                char = '!'
+                letter = chr(ord(letter) + 1)
+                if ord(letter) > 122:
+                    for k in tf:
+                        for item in found[k]:
+                            if item not in tf[k]:
+                                tf[k].append(item)
+                    matches = 0
+                    num_hashes = 0
+                    process_file()
+                    new_percent = matches/len(yours)*100
+                    print("\nGiven hashes:      " + str(len(yours)))
+                    print("Calculated hashes: " + str(num_hashes))
+                    print("Matches:           " + str(matches))
+                    print("Hit percentage:    " + str(int(new_percent)) + "\n")
+                    print("Result dict:")
+                    for ltr, val in tf.items():
+                        print("'" + ltr + "': ", end="")
+                        print(val, end="")
+                        print(",")
+                    break
 
 
 main()
