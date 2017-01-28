@@ -87,11 +87,14 @@ def main():
     offset = 0
     while True:
         exit = True
+        quit = True
         print("\nInput:")
         for i in range(97, 122):
-            if len(tf[chr(i)]) >= (speed+count):
+            if len(tf[chr(i)]) >= (speed+offset):
+                quit = False
+            if len(tf[chr(i)]) >= (speed+count+offset):
                 exit = False
-                tf[chr(i)] = tf[chr(i)][count:speed+count]
+                tf[chr(i)] = tf[chr(i)][count+offset:speed+count+offset]
             else:
                 tf[chr(i)] = tf[chr(i)][offset:speed+offset]
             print(tf[chr(i)])
@@ -100,6 +103,8 @@ def main():
             offset += 1
             count = 0
             continue
+        if quit:
+            return
         count += 1
         process_file()
         base_percent = matches/len(yours)*100
