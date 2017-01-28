@@ -3,7 +3,7 @@ import hashlib
 import copy
 
 
-speed = 2
+speed = 1
 hashin = "hash.in"
 seedin = "input.txt"
 num_hashes = 0
@@ -84,6 +84,7 @@ def main():
     global found
     global speed
     count = 0
+    offset = 0
     while True:
         exit = True
         print("\nInput:")
@@ -92,11 +93,13 @@ def main():
                 exit = False
                 tf[chr(i)] = tf[chr(i)][count:speed+count]
             else:
-                tf[chr(i)] = tf[chr(i)][:speed]
+                tf[chr(i)] = tf[chr(i)][offset:speed+offset]
             print(tf[chr(i)])
         print("")
         if exit:
-            return
+            offset += 1
+            count = 0
+            continue
         count += 1
         process_file()
         base_percent = matches/len(yours)*100
@@ -138,7 +141,7 @@ def main():
                     print("\nGiven hashes:      " + str(len(yours)))
                     print("Calculated hashes: " + str(num_hashes))
                     print("Matches:           " + str(matches))
-                    print("Hit percentage:    " + str(int(new_percent)) + "\n")
+                    print("Coverage:          " + str(int(new_percent)) + "\n")
                     print("Result dict:")
                     for ltr, val in tf.items():
                         print("'" + ltr + "': ", end="")
