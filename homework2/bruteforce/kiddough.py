@@ -63,11 +63,12 @@ def transform_string(string, buf, idx, mine):
 def process_file():
     global matches, inputs
     for line in fileinput.input(seedin):
-        # line = re.sub('[^a-zA-Z]+', ' ', line)
+        line = re.sub('[^a-zA-Z]+', ' ', line)
+        # line = re.sub('--', ' ', line)
         line = line.split()
         mnemonic = ''
         for word in line:
-            word = word.lstrip('["_]')
+            #word = word.lstrip('["_]')
             if word == '':
                 continue
             mnemonic = ''.join([mnemonic, word[0].lower()])
