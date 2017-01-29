@@ -1,0 +1,9 @@
+#!/bin/bash
+while read -u 8 f; do
+  echo $f | /playpen/fooPasswordKeeper
+  if [ $? -eq 0 ]; then
+    echo $f
+    exit $?
+  fi
+done 8<kiddough.out
+
