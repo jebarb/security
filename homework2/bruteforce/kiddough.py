@@ -68,7 +68,7 @@ def process_file():
         line = line.split()
         mnemonic = ''
         for word in line:
-            #word = word.lstrip('["_]')
+            # word = word.lstrip('["_]')
             if word == '':
                 continue
             mnemonic = ''.join([mnemonic, word[0].lower()])
