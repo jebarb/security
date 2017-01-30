@@ -6,7 +6,7 @@ import re
 import random
 
 
-hashin = "hash.in"
+hashin = "bighash"
 seedin = "input.txt"
 num_hashes = 0
 matches = 0
@@ -34,7 +34,8 @@ tf = {
         'q': ['q', 'Q'],
         'r': ['r', 'R'],
         's': ['s', '$', '5', 'S', 'c'],
-        't': ['t', '2', '7', 'T', '8', 'B', 'b'],
+        't': ['t', '2', '7', 'T'],
+        # 't': ['t', '2', '7', 'T', '8', 'B', 'b'],
         'u': ['u', 'U'],
         'v': ['v', 'V'],
         'w': ['w', 'W'],
@@ -42,8 +43,8 @@ tf = {
         'y': ['y', 'Y', 'u'],
         'z': ['z'],
         }
-# for i in range(97, 123):  # empty predefined subs
-#     tf[chr(i)] = tf[chr(i)][:1]
+for i in range(97, 123):  # empty predefined subs
+    tf[chr(i)] = tf[chr(i)][:1]
 found = copy.deepcopy(tf)
 
 
@@ -96,7 +97,7 @@ def print_results():
     print("\nGiven hashes:       " + str(goal))
     print("Calculated hashes:  " + str(num_hashes))
     print("Matches:            " + str(matches))
-    print("Coverage:           " + str(int(new_percent)) + "%\n")
+    print("Coverage:           " + str(new_percent) + "%\n")
     return new_percent
 
 
@@ -104,6 +105,8 @@ def main():
     global yours, num_hashes, matches, tf, speed, found, goal
     offset = 0
     process_file()
+    process_inputs()
+    print_results()
     while True:  # build new dict
         num_hashes = 0
         matches = 0
@@ -113,40 +116,38 @@ def main():
                 offset = random.randint(0, len(tf[c])-speed)
                 tf[c] = tf[c][offset:offset+speed]
         process_inputs()
-        base_percent = print_results()
+        base_percent = matches/goal*100
         letter = 'a'
         char = '!'
         new_percent = 0.0
-        print(letter)
         while True:  # test substitutions
             num_hashes = 0
             matches = 0
-            if char not in tf[letter]:
+            if char not in found[letter]:
                 tf[letter].append(char)
                 process_inputs()
                 new_percent = matches/goal*100
-                if new_percent > base_percent and char not in found[letter]:
+                if new_percent > base_percent:
                     new_char = True
-                    found[letter].append(char)
-                    tf = copy.deepcopy(found)
-                    print_results()
-                    return
                     print("  Letter, substitution: " + letter + ", " + char)
+                    found[letter].append(char)
+                    # tf = copy.deepcopy(found)
+                    # print_results()
+                    # return
                 tf[letter].pop()
             char = chr(ord(char) + 1)
             if ord(char) > 126:  # move on to next letter
                 char = '!'
                 letter = chr(ord(letter) + 1)
-                print(letter)
                 if ord(letter) > 122:  # reached z
                     num_hashes = 0
                     matches = 0
                     tf = copy.deepcopy(found)
                     if new_char:
-                       process_inputs()
-                       if print_results() == 100:
-                           print("SUCCESS!!")
-                           return
+                        process_inputs()
+                        if print_results() == 100:
+                            print("SUCCESS!!")
+                            return
                     break
 
 
