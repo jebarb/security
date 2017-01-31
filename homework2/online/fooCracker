@@ -1,10 +1,12 @@
 #!/bin/bash
-while read -u 8 f; do
-  OUTPUT="$(echo $f | /playpen/fooPasswordKeeper)"
+while read f; do
+  OUTPUT="$(echo $f | ./fooPasswordKeeper)"
+  echo $f
   if [ $? -eq 0 ]; then
+    echo Password:
     echo $f
-    echo Password: "${OUTPUT}"
+    echo "${OUTPUT}"
     exit $?
   fi
-done 8<kiddough.out
+done
 

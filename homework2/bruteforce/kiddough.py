@@ -6,7 +6,7 @@ import re
 import random
 
 
-hashin = "bighash"
+hashin = "littlehash"
 seedin = "input.txt"
 num_hashes = 0
 matches = 0
@@ -43,8 +43,8 @@ tf = {
         'y': ['y', 'Y', 'u'],
         'z': ['z'],
         }
-for i in range(97, 123):  # empty predefined subs
-    tf[chr(i)] = tf[chr(i)][:1]
+# for i in range(97, 123):  # empty predefined subs
+#     tf[chr(i)] = tf[chr(i)][:1]
 found = copy.deepcopy(tf)
 
 
@@ -53,8 +53,12 @@ def transform_string(string, buf, idx, mine):
     for c in tf[string[idx]]:
         if idx == 7:
             num_hashes += 1
-            mine[hashlib.sha1(
-                ''.join([buf, c]).encode('utf-8')).hexdigest()] = ''
+            res = hashlib.sha1(''.join([buf, c]).encode('utf-8')).hexdigest()
+            try:
+                yours.remove(res)
+                matches += 1
+            except KeyError:
+                continue
         else:
             transform_string(string, ''.join([buf, c]), idx+1, mine)
 
@@ -81,9 +85,6 @@ def process_inputs():
     mine = {}
     for string in inputs:
         transform_string(string, '', 0, mine)
-    for i in yours:
-        if i in mine:
-            matches += 1
 
 
 def print_results():
