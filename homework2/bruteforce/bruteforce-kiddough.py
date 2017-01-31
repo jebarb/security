@@ -7,7 +7,7 @@ import random
 
 
 hashin = "bighash"
-seedin = "input.txt"
+seedin = "artofwar.txt"
 num_hashes = 0
 matches = 0
 speed = 1
@@ -43,8 +43,8 @@ tf = {
         'y': ['y', 'Y', 'u'],
         'z': ['z'],
         }
-for i in range(97, 123):  # empty predefined subs
-    tf[chr(i)] = tf[chr(i)][:1]
+# for i in range(97, 123):  # empty predefined subs
+#     tf[chr(i)] = tf[chr(i)][:1]
 found = copy.deepcopy(tf)
 
 
