@@ -23,7 +23,7 @@ tf = {
         'q': ['q', 'Q'],
         'r': ['r', 'R'],
         's': ['s', 'S', '$', '5', 'c'],
-        't': ['t', 'T', '2', '7'],
+        't': ['t', 'T', '2', '7', '8', 'B', 'b'],
         'u': ['u', 'U'],
         'v': ['v', 'V'],
         'w': ['w', 'W'],
@@ -32,29 +32,21 @@ tf = {
         'z': ['z']
         }
 
+pwords = []
+
 
 def transform_string(string, buf, idx):
     for c in tf[string[idx].lower()]:
         if idx == 7:
-            print(''.join([buf, c]))
+            pwords.append(''.join([buf, c]))
         else:
             transform_string(string, ''.join([buf, c]), idx+1)
 
 
 def process_file():  # process input and output
-    for line in fileinput.input():
-        line = re.sub("[^'a-zA-Z]+", " ", line)
-        line = line.split()
-        mnemonic = ''
-        for word in line:
-            if word == '':
-                continue
-            mnemonic = ''.join([mnemonic, word[0]])
-            if len(mnemonic) == 8:
-                break
-        if len(mnemonic) < 8:
-            continue
-        transform_string(mnemonic, '', 0)
+    transform_string("yosemite", '', 0)
+    for i in pwords:
+        print(i)
 
 
 process_file()

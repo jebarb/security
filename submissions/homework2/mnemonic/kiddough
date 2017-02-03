@@ -43,11 +43,13 @@ def transform_string(string, buf, idx):
 
 def process_file():  # process input and output
     for line in fileinput.input():
-        line = re.sub("[^'a-zA-Z]+", " ", line)
-        line = line.split()
+        if re.match("^\s*$", line):
+            continue
+        line = re.split("[^'a-zA-Z]+", line)
         mnemonic = ''
         for word in line:
-            if word == '':
+            word = word.lstrip("'")
+            if len(word) == 0:
                 continue
             mnemonic = ''.join([mnemonic, word[0]])
             if len(mnemonic) == 8:
