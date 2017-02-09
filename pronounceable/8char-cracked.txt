@@ -1,0 +1,10 @@
+pronoun0:ELEMENTS
+pronoun99:AINGSTER
+pronoun93:NESTABLE
+pronoun64:INGSHING
+pronoun65:INGSHING
+pronoun212:INGSTEST
+pronoun243:TINGINGS
+pronoun149:ENTATION
+pronoun180:PRATIONS
+

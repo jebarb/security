@@ -8,7 +8,7 @@ import copy
 
 hashin = "/playpen/passwords_part2/mnemonic_hashes"
 seeds = ["/playpen/passwords_part2/texts/artofwar.txt",
-        "/playpen/passwords_part2/texts/theraven.txt"]
+         "/playpen/passwords_part2/texts/theraven.txt"]
 matched = False
 yours = set([line.rstrip('\n') for line in fileinput.input(hashin)])
 inputs = []
@@ -69,7 +69,6 @@ def main():
             for i in tf.items():
                 print(i)
             return
-        new_char = False
         for c in tf:  # take a random sample of substitutions
             offset = random.randint(0, len(found[c])-1)
             tf[c] = found[c][offset:offset+1]
@@ -80,7 +79,6 @@ def main():
                 tf[letter] = char
                 process_mnemons(letter)
                 if matched:  # and it's a valid substitution (probably)
-                    new_char = True
                     found[letter].append(char)
             char = chr(ord(char) + 1)
             if ord(char) > 126:  # move on to next letter
