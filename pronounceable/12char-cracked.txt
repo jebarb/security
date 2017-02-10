@@ -1,0 +1,17 @@
+pronoun0:ELEMENTS
+pronoun23:PRINGENCE
+pronoun48:RIERSTERN
+pronoun20:POSTERED
+pronoun14:THUNTNER
+pronoun69:PRENTIOUS
+pronoun49:PHYTHING
+pronoun37:DOLEADER
+pronoun35:PLANGUID
+pronoun22:ESTHENIN
+pronoun43:LORTHILL
+pronoun11:MULLERTS
+pronoun66:AGERINGED
+pronoun6:DISHMING
+pronoun86:CHUDGERS
+pronoun38:STUNTEDS
+pronoun55:KIPLAXER

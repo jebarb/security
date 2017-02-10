@@ -39,14 +39,13 @@ def generate_word():
         elif char in consonants:
             cons += 1
         res = ''.join([res, char])
-    return res
+    return res.upper()
 
 
 while True:
     word = generate_word()
     found = []
     for uname, sha1 in tocrack.items():
-        print(uname + ":" + sha1)
         if hashlib.sha1(''.join(["y!:", uname, ":",  word])
                         .encode('utf-8')).hexdigest() == sha1:
             print(uname + ":" + word)
