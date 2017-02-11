@@ -1,4 +1,0 @@
-Password: $t0inS@a
-Filename: Elliot.exe
-Location: C:\Windows\SoftwareDistribution\Download\Elliot.exe
-key: 010607c0b3e67943

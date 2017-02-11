@@ -1,10 +1,8 @@
 #!/bin/bash
 while read f; do
-  OUTPUT="$(echo $f | ./fooPasswordKeeper)"
-  echo $f
+  OUTPUT="$(echo $f | /playpen/fooPasswordKeeper)"
   if [ $? -eq 0 ]; then
-    echo Password:
-    echo $f
+    echo Password: $f
     echo "${OUTPUT}"
     exit $?
   fi
