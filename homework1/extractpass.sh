@@ -2,7 +2,7 @@
 top="SOFTWARE"
 entry="Password"
 folder="Microsoft\\Windows"
-vm="COMP535VM_2"
+vm="COMP535VM_2_1"
 
 while [[ $# -gt 1 ]]
 do
