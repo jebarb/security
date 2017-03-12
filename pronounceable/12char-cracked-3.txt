@@ -29,3 +29,6 @@ pronoun18:RUNGBOAT
 pronoun13:DUCKEBER
 pronoun79:MAUNDSTA
 pronoun70:SOUNDOVA
+pronoun67:HAUNTRANG
+pronoun57:SCHLECKING
+pronoun72:MOLLETON

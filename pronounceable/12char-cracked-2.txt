@@ -29,3 +29,5 @@ pronoun18:RUNGBOAT
 pronoun13:DUCKEBER
 pronoun79:MAUNDSTA
 pronoun70:SOUNDOVA
+pronoun94:SPINNERSTS
+pronoun81:UNLILDER
