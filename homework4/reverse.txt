@@ -1,0 +1,367 @@
+Things I notice:
+    the board is 91 inner, 93 outer
+    the terrain is never part of the initial payload.  Terrain is entirely client defined, so we can totally ignore it.
+    however, we cannot place terrain or really use it to our advantage...
+
+Analysis of the 5 byte prefix:
+    byte 1: no idea - it's always just 94.  might be a proto version number.
+    byte 2: who is speaking.  01 is reserved for server.  This is JANKY.
+    byte 3: message counter.  either how many messages have been sent, or a global counter.
+    byte 4: suspect this is a success/fail code.  c0 seems to mean "Good"
+          : further suspect the lower 8 bits is command length.
+            c -> check_winner and query_leader, both 12
+            d -> move_to_arena, 13
+            e -> connect_player, 14
+            5 -> spawn, 5
+          : the upper bits are either a,b,c, with a denoting a command, and c denoting a response, with the exception of a single b.
+
+    Typical syntax:
+        Command, a byte to indicate number of arguemtns, and the argument list
+        each argument or peice of data has a prefix with type and list.
+
+CLIENT INTRODUCES ITSELF:
+                        c  o  n  n  e  c  t  _  p  l  a  y
+    0000   94 00 01 ae 63 6f 6e 6e 65 63 74 5f 70 6c 61 79  ....connect_play
+    0010   65 72|93|a4 61 73 64 66|a4 30 30 30 30|b0 37 38  er..asdf.0000.78
+    0020   64 61 62 66 33 32 61 34 33 33 63 65 33 66        dabf32a433ce3f
+
+    """Client assumes it's own ID is 00 until told otherwise"""
+
+SERVER:
+
+    0000   94 01 01 c0 00                                   .....
+
+Client:
+                        g  e  t  _  t  _  i  d  ?  ?  a  s
+    0000   94 00 02 a8 67 65 74 5f 74 5f 69 64|91|a4 61 73  ....get_t_id..as
+    0010   64 66                                            df
+
+    """client asks for it's real ID, in case there are several players in the room...."""
+
+Server says: your ID is 00
+
+    0000   94 01 02 c0 00                                   .....
+
+Client asks get_time_remaining (with another transform on the counter.)
+
+    0000   94 00 03 b2 67 65 74 5f 74 69 6d 65 5f 72 65 6d  ....get_time_rem
+    0010   61 69 6e 69 6e 67 90                             aining.
+
+Server updates again...
+                      \--------/ probably seconds until the server restarts
+    0000   94 01 03 c0 cd 05 92                             .......
+
+Client asks query_leader
+                        q  u  e  r  y  _  l  e  a  d  e  r
+    0000   94 00 04 ac 71 75 65 72 79 5f 6c 65 61 64 65 72  ....query_leader
+    0010   90                                               .
+
+The response: leader is a0.  Whatever that means.
+
+    0000   94 01 04 c0 a0                                   .....
+
+you select your game mode....
+Client then says:
+                        s  p  a  w  n  *
+    0000   94 00 05 a5 73 70 61 77 6e 93 9e a0 a0 00 00 00  ....spawn.......
+    0010   00 00 00 00 00 a0 a5 1b 5b 34 30 6d a0 00 a4 61  ........[40m...a
+    0020   73 64 66 03                                      sdf.
+            s  d  f  
+
+Server:
+
+    0000   94 01 05 c0 9e a4 61 73 64 66 a0 64 03 00 04 29  ......asdf.d...)
+    0010   05 00 00 a0 a5 1b 5b 34 30 6d a4 61 73 64 66 00  ......[40m.asdf.
+
+Client specifies the arena: 
+                    14  m  o  v  e  _  t  o  _  a  r  e  n
+    0000   94 00 06 ad 6d 6f 76 65 5f 74 6f 5f 61 72 65 6e  ....move_to_aren
+    0010   61|94 a4 61 73 64 66 00 00 c3                    a..asdf...
+
+Server grants request:
+
+    0000   94 01 06 c0 c0                                   .....
+
+Client 
+
+    0000   94 00 07 ac 63 68 65 63 6b 5f 77 69 6e 6e 65 72  ....check_winner
+    0010   93 a4 61 73 64 66 00 00                          ..asdf..
+
+Servery: no winner:
+                       \/ --- FALSE
+    0000   94 01 07 c0 00                                   .....
+
+Client: 
+
+    0000   94 00 08 a6 75 70 64 61 74 65 93 a4 61 73 64 66  ....update..asdf
+    0010   00 00                                            ..
+
+SERVER - MAP DATA:
+    
+    """
+       94 c's wide, 34 rows tall.
+       There's a hidden row on the outside.  Perfect.
+       line begins with .^
+    """
+
+                             \/ 0x22 == 34, len of list
+    0000   94 01 08 c0|dc 00 22 d9 5e 63 63 63 63 63 63 63  ......".^ccccccc
+    0010   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0020   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0030   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0040   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0050   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0060   63 63 63 63 63 63 63 d9 5e 63 63 63 63 63 63 63  ccccccc.^ccccccc
+    0070   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0080   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0090   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    00a0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    00b0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    00c0   63 63 63 63 63 63 63 d9 5e 63 63 63 63 63 63 63  ccccccc.^ccccccc
+    00d0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    00e0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    00f0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0100   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0110   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0120   63 63 63 63 63 63 63 d9 5e 63 63 63 63 63 63 63  ccccccc.^ccccccc
+    0130   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0140   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0150   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0160   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0170   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0180   63 63 63 63 63 63 63 d9 5e 63 63 63 63 63 63 63  ccccccc.^ccccccc
+    0190   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    01a0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    01b0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    01c0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    01d0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    01e0   63 63 63 63 63 63 63 d9 5e 63 63 63 63 63 63 63  ccccccc.^ccccccc
+    01f0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0200   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0210   63 63 09 63 63 63 63 63 63 63 63 63 63 63 63 63  cc.ccccccccccccc
+    0220   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0230   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0240   63 63 63 63 63 63 63 d9 5e 63 63 63 63 63 63 63  ccccccc.^ccccccc
+    0250   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0260   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0270   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0280   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0290   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    02a0   63 63 63 63 63 63 63 d9 5e 63 63 63 63 63 63 63  ccccccc.^ccccccc
+    02b0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    02c0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    02d0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    02e0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    02f0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0300   63 63 63 63 63 63 63 d9 5e 63 63 63 63 63 63 63  ccccccc.^ccccccc
+    0310   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0320   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0330   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0340   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0350   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0360   63 63 63 63 63 63 63 d9 5e 63 63 63 63 63 63 63  ccccccc.^ccccccc
+    0370   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0380   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0390   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    03a0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    03b0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    03c0   63 63 63 63 63 63 63 d9 5e 63 63 63 63 63 63 63  ccccccc.^ccccccc
+    03d0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    03e0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    03f0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0400   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0410   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0420   63 63 63 63 63 63 63 d9 5e 63 63 63 63 63 63 63  ccccccc.^ccccccc
+    0430   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0440   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0450   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0460   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0470   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0480   63 63 63 63 63 63 63 d9 5e 63 63 63 63 63 63 63  ccccccc.^ccccccc
+    0490   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    04a0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    04b0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    04c0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    04d0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    04e0   63 63 63 63 63 63 63 d9 5e 63 63 63 63 63 63 63  ccccccc.^ccccccc
+    04f0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0500   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0510   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0520   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0530   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0540   63 63 63 63 63 63 63 d9 5e 63 63 63 63 63 63 63  ccccccc.^ccccccc
+    0550   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0560   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0570   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0580   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0590   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    05a0   63 63 63 63 63 63 63 d9 5e 63 63 63 63 63 63 63  ccccccc.^ccccccc
+    05b0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    05c0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    05d0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    05e0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    05f0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0600   63 63 63 63 63 63 63 d9 5e 63 63 63 63 63 63 63  ccccccc.^ccccccc
+    0610   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0620   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0630   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0640   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0650   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0660   63 63 63 63 63 63 63 d9 5e 63 63 63 63 63 63 63  ccccccc.^ccccccc
+    0670   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0680   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0690   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    06a0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    06b0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    06c0   63 63 63 63 63 63 63 d9 5e 63 63 63 63 63 63 63  ccccccc.^ccccccc
+    06d0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    06e0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    06f0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0700   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0710   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0720   63 63 63 63 63 63 63 d9 5e 63 63 63 63 63 63 63  ccccccc.^ccccccc
+    0730   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0740   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0750   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0760   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0770   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0780   63 63 63 63 63 63 63 d9 5e 63 63 63 63 63 63 63  ccccccc.^ccccccc
+    0790   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    07a0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    07b0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    07c0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    07d0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    07e0   63 63 63 63 63 63 63 d9 5e 63 63 63 63 63 63 63  ccccccc.^ccccccc
+    07f0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0800   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0810   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0820   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0830   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0840   63 63 63 63 63 63 63 d9 5e 63 63 63 63 63 63 63  ccccccc.^ccccccc
+    0850   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0860   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0870   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0880   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0890   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    08a0   63 63 63 63 63 63 63 d9 5e 63 63 63 63 63 63 63  ccccccc.^ccccccc
+    08b0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    08c0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    08d0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    08e0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    08f0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0900   63 63 63 63 63 63 63 d9 5e 63 63 63 63 63 63 63  ccccccc.^ccccccc
+    0910   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0920   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0930   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0940   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0950   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0960   63 63 63 63 63 63 63 d9 5e 63 63 63 63 63 63 63  ccccccc.^ccccccc
+    0970   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0980   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0990   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    09a0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    09b0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    09c0   63 63 63 63 63 63 63 d9 5e 63 63 63 63 63 63 63  ccccccc.^ccccccc
+    09d0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    09e0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    09f0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0a00   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0a10   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0a20   63 63 63 63 63 63 63 d9 5e 63 63 63 63 63 63 63  ccccccc.^ccccccc
+    0a30   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0a40   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0a50   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0a60   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0a70   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0a80   63 63 63 63 63 63 63 d9 5e 63 63 63 63 63 63 63  ccccccc.^ccccccc
+    0a90   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0aa0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0ab0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0ac0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0ad0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0ae0   63 63 63 63 63 63 63 d9 5e 63 63 63 63 63 63 63  ccccccc.^ccccccc
+    0af0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0b00   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0b10   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0b20   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0b30   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0b40   63 63 63 63 63 63 63 d9 5e 63 63 63 63 63 63 63  ccccccc.^ccccccc
+    0b50   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0b60   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0b70   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0b80   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0b90   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0ba0   63 63 63 63 63 63 63 d9 5e 63 63 63 63 63 63 63  ccccccc.^ccccccc
+    0bb0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0bc0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0bd0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0be0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0bf0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0c00   63 63 63 63 63 63 63 d9 5e 63 63 63 63 63 63 63  ccccccc.^ccccccc
+    0c10   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0c20   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0c30   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0c40   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0c50   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0c60   63 63 63 63 63 63 63 d9 5e 63 63 63 63 63 63 63  ccccccc.^ccccccc
+    0c70   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0c80   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0c90   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0ca0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0cb0   63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63  cccccccccccccccc
+    0cc0   63 63 63 63 63 63 63                             ccccccc
+
+
+Client: GEt people
+
+    0000   94 00 09 a7 67 65 74 5f 70 70 6c 93 a4 61 73 64  ....get_ppl..asd
+    0010   66 00 00                                         f..
+
+Server:
+
+    0000   94 01 09 c0|91 9e a4 61 73 64 66 a0 64 03 00 04  .......asdf.d...
+    0010   29 05 00 00 a5 1b 5b 33 36 6d a5 1b 5b 34 30 6d  ).....[36m..[40m
+    0020   a4 61 73 64 66 00                                .asdf.
+
+CLIENT: MOVE player - as you can tell from the message counter, 
+    these messages are in reverse cronological order.
+
+                 |------| message counter grows in size.
+    0000   94 00 cd 01 29 a4 6d 6f 76 65 95 a4 61 73 64 66  ....).move..asdf
+    0010   00 00 01 00                                      ....
+
+    0000   94 00 cd 01 16 a4 6d 6f 76 65 95 a4 61 73 64 66  ......move..asdf
+    0010   00 00 01 00                                      ....
+
+    0000   94 00 cd 01 06 a4 6d 6f 76 65 95 a4 61 73 64 66  ......move..asdf
+    0010   00 00 01 00                                      ....
+
+    0000   94 00 cc f6 a4 6d 6f 76 65 95 a4 61 73 64 66 00  .....move..asdf.
+    0010   00 01 00   
+
+    This was captured from a bot match:
+    
+    0000   94 00 cd 0b 2e a4 6d 6f 76 65 95 ad 52 69 73 6b  ......move..Risk
+    0010   79 48 6f 6e 65 79 70 6f 74 00 06 ff 00           yHoneypot....
+                                      ...
+As far as I can tell, this is the entire game loop.
+
+    1) ask for people.
+    2) ask for map updates
+    repeat...
+
+GET PPL before vs after
+
+0000   94 01 cd 16 9d c0 92 9e a4 61 73 64 66 a0 
+                                                 02 01  .........asdf...
+0010   00 04 57 05 00 00 a5 1b 5b 33 32 6d a5 1b 5b 34  ..W.....[32m..[4
+0020   30 6d a4 61 73 64 66 00 9e a4 31 32 33 34 a0 64  0m.asdf...1234.d
+0030   03 02 04 57 07 00 00 a5 1b 5b 33 36 6d a5 1b 5b  ...W.....[36m..[
+0040   34 30 6d a4 31 32 33 34 00                       40m.1234.
+
+0000   94 01 cd 16 a3 c0 92 9e a4 61 73 64 66 a0 
+                                                 fb 01  .........asdf...
+0010   00 04 57 05 00 00 a5 1b 5b 33 30 6d a5 1b 5b 34  ..W.....[30m..[4
+0020   30 6d a4 61 73 64 66 00 9e a4 31 32 33 34 a0 64  0m.asdf...1234.d
+0030   03 02 04 57 07 00 00 a5 1b 5b 33 36 6d a5 1b 5b  ...W.....[36m..[
+0040   34 30 6d a4 31 32 33 34 00                       40m.1234.
