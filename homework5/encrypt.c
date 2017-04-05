@@ -89,31 +89,32 @@ int decrypt(unsigned char *ciphertext, int ciphertext_len, unsigned long seed, u
 
 int check_if_ascii(unsigned char *plaintext, int plaintext_len) {
   while (plaintext_len-- > 0)
-    if (isascii((int) *plaintext++)) return 1;
-  return 0;
+    if (!isascii((int) *plaintext++)) return 0;
+  return 1;
 }
 
 int main(int argc, char *argv[]) {
   int max_num = 65536;
-  int utime_hi = 0;
-  int utime_lo = 0;
-  int utime = 0;
+  unsigned int utime = time(NULL);
+  unsigned int utime_hi = utime >> 16;
+  unsigned int utime_lo = (utime << 16) >> 16;
   unsigned char *plaintext;
   int plaintext_len;
   unsigned char *ciphertext;
   int ciphertext_len = 0;
+
   for (int hi = 0; hi + utime_hi < max_num && utime_hi - hi >= 0; ++hi) {
     for (int lo = 0; lo + utime_lo < max_num && utime_lo - lo >= 0; ++lo) {
       if (utime_hi + hi < max_num) {
         if (utime_lo + lo < max_num) {
-          plaintext_len = decrypt(ciphertext, ciphertext_len, utime + hi + lo, plaintext);
+          plaintext_len = decrypt(ciphertext, ciphertext_len, utime + (hi << 16) + lo, plaintext);
           if (!check_if_ascii(plaintext, plaintext_len)) {
             fwrite(plaintext, plaintext_len, 1, stdout);
             return 0;
           }
         }
         if (utime_lo - lo > 0) {
-          plaintext_len = decrypt(ciphertext, ciphertext_len, utime + hi - lo, plaintext);
+          plaintext_len = decrypt(ciphertext, ciphertext_len, utime + (hi << 16) - lo, plaintext);
           if (!check_if_ascii(plaintext, plaintext_len)) {
             fwrite(plaintext, plaintext_len, 1, stdout);
             return 0;
@@ -122,14 +123,14 @@ int main(int argc, char *argv[]) {
       }
       if (hi > 0 && utime_hi - hi > 0) {
         if (utime_lo + lo < max_num) {
-          plaintext_len = decrypt(ciphertext, ciphertext_len, utime - hi + lo, plaintext);
+          plaintext_len = decrypt(ciphertext, ciphertext_len, utime - (hi << 16) + lo, plaintext);
           if (!check_if_ascii(plaintext, plaintext_len)) {
             fwrite(plaintext, plaintext_len, 1, stdout);
             return 0;
           }
         }
         if (utime_lo - lo > 0) {
-          plaintext_len = decrypt(ciphertext, ciphertext_len, utime - hi - lo, plaintext);
+          plaintext_len = decrypt(ciphertext, ciphertext_len, utime - (hi << 16) - lo, plaintext);
           if (!check_if_ascii(plaintext, plaintext_len)) {
             fwrite(plaintext, plaintext_len, 1, stdout);
             return 0;
