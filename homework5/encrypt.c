@@ -31,7 +31,7 @@ int decrypt(unsigned char *ciphertext, int ciphertext_len, unsigned char *key,
    * In this example we are using 256 bit AES (i.e. a 256 bit key). The
    * IV size for *most* modes is the same as the block size. For AES this
    * is 128 bits */
-  if(1 != EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv))
+  if(1 != EVP_DecryptInit_ex(ctx, EVP_aes_256_ctr(), NULL, key, iv))
     handleErrors();
 
   /* Provide the message to be decrypted, and obtain the plaintext output.
@@ -121,9 +121,11 @@ int force_decrypt(int utime_start, unsigned char *ciphertext, int ciphertext_len
   
   while (1){
     // iterate over lower bits
-    for (unsigned int lower_bits = 0; lower_bits < 0xffff; lower_bits++){
+    for (unsigned int lower_bits = 0; lower_bits <= 0xffff; lower_bits++){
       if (utime_plus){
-        get_key_iv((unsigned long) utime_plus & lower_bits, key, iv);
+        unsigned long seed = (unsigned long) (utime_plus | lower_bits) ;
+        get_key_iv(seed, key, iv);
+        // printf("%lu, %d, %d, %d, %s\n", seed, utime_plus, lower_bits, iv, plaintext);
         plaintext_len = decrypt(ciphertext, ciphertext_len, key, iv, plaintext);
         if (check_if_ascii(plaintext, plaintext_len))
           return plaintext_len;        
@@ -135,16 +137,30 @@ int force_decrypt(int utime_start, unsigned char *ciphertext, int ciphertext_len
           return plaintext_len;     
       }
     }
+
     if (utime_plus)
       utime_plus += utime_inc_value;
     if (utime_minus)
       utime_minus -= utime_inc_value; 
-    if (utime_minus && utime_plus)
+    if (utime_minus && utime_plus){
+      printf("FAILED\n");
       break; // NO KEY EXISTS
+    }
   }
 }
 
 int main(int argc, char *argv[]) {
 
+  unsigned char *plaintext = (unsigned char*)"THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG";
+  unsigned int plaintext_len = 43;
+
+  unsigned char *ciphertext = malloc(sizeof(unsigned char) * plaintext_len);
+  //unsigned char *plaintext, int plaintext_len, unsigned long seed, unsigned char *ciphertext
+  unsigned int ciphertext_len = encrypt(plaintext, plaintext_len, (unsigned long) 0x12345678, ciphertext);
+  printf("%d\n", ciphertext_len);
+
+  unsigned char* unencrypted = malloc(sizeof(unsigned char)*ciphertext_len);
+  force_decrypt(0x12340000, ciphertext, ciphertext_len, unencrypted);
+  printf("%s\n", unencrypted);
   return 0;
 }
