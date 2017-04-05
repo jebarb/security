@@ -50,41 +50,61 @@ int encrypt(unsigned char *plaintext, int plaintext_len, unsigned long seed, uns
   return ciphertext_len;
 }
 
+void get_key_iv(unsigned long seed, unsigned char *key, unsigned char *iv){
+  // set random seed
+  srand(seed);
+  // create key and iv
+  int i;
+  for (i = 0; i < 32; i++)
+    key[i] = rand() & 0xff;
+  for (i = 0; i < 16; i++)
+    iv[i] = rand() & 0xff;
+}
+
 int check_if_ascii(unsigned char *plaintext, int plaintext_len) {
   while (plaintext_len-- > 0)
-    if (isascii((int) *plaintext++)) return 1;
-  return 0;
+    if (!isascii((int) *plaintext++)) return 0;
+  return 1;
+}
+
+int force_decrypt(int utime_start, unsigned char *ciphertext, int ciphertext_len, unsigned char *plaintext){
+  /*
+    Starting at the given timestamp, 
+    iterate in both directions MODIFYING LOW ORDER BITS FIRST
+  */
+  unsigned int utime_upper = utime_start & 0xffff0000; // Mask off lower 16
+  unsigned int utime_inc_value = 0x00010000; // 2^16
+  unsigned int utime_plus = utime_upper;
+  unsigned int utime_minus = utime_upper - utime_inc_value;
+  unsigned int plaintext_len;
+  unsigned char key[32], iv[16];
+  
+  while (1){
+    // iterate over lower bits
+    for (unsigned int lower_bits = 0; lower_bits < 0xffff; lower_bits++){
+      if (utime_plus){
+        get_key_iv((unsigned long) utime_plus & lower_bits, key, iv);
+        plaintext_len = decrypt(ciphertext, ciphertext_len, key, iv, plaintext);
+        if (check_if_ascii(plaintext, plaintext_len))
+          return plaintext_len;        
+      }
+      if (utime_minus){
+        get_key_iv((unsigned long) utime_minus & lower_bits, &key, &iv);
+        plaintext_len = decrypt(ciphertext, ciphertext_len, key, iv, plaintext);
+        if (check_if_ascii(plaintext, plaintext_len))
+          return plaintext_len;     
+      }
+    }
+    if (utime_plus)
+      utime_plus += utime_inc_value;
+    if (utime_minus)
+      utime_minus -= utime_inc_value; 
+    if (utime_minus && utime_plus)
+      break; // NO KEY EXISTS
+  }
 }
 
 int main(int argc, char *argv[]) {
-  int max_num = 65536;
-  int utime_hi = 0;
-  int utime_lo = 0;
-  int utime = 0;
-  unsigned char *plaintext;
-  int plaintext_len;
-  unsigned char *ciphertext;
-  int ciphertext_len = 0;
-  for (int hi = 0; hi + utime_hi < max_num && utime_hi - hi >= 0; ++hi) {
-    for (int lo = 0; lo + utime_lo < max_num && utime_lo - lo >= 0; ++lo) {
-      if (utime_hi + hi < max_num) {
-        if (utime_lo + lo < max_num) {
-          plaintext_len = encrypt(ciphertext, ciphertext_len, utime + hi + lo, plaintext);
-          if (!check_if_ascii(plaintext, plaintext_len))  {
-
-              }
-
-        if (utime_lo - lo > 0)
-          plaintext_len = encrypt(ciphertext, ciphertext_len, utime + hi - lo, plaintext);
-      }
-      if (hi > 0 && utime_hi - hi > 0) {
-        if (utime_lo + lo < max_num)
-          plaintext_len = encrypt(ciphertext, ciphertext_len, utime - hi + lo, plaintext);
-        if (utime_lo - lo > 0)
-          plaintext_len = encrypt(ciphertext, ciphertext_len, utime - hi - lo, plaintext);
-      }
-    }
-  }
 
   return 0;
 }
