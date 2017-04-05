@@ -123,26 +123,26 @@ int force_decrypt(int utime_start, unsigned char *ciphertext, int ciphertext_len
     // iterate over lower bits
     for (unsigned int lower_bits = 0; lower_bits <= 0xffff; lower_bits++){
       if (utime_plus){
-        unsigned long seed = (unsigned long) (utime_plus | lower_bits) ;
-        get_key_iv(seed, key, iv);
-        // printf("%lu, %d, %d, %d, %s\n", seed, utime_plus, lower_bits, iv, plaintext);
+        get_key_iv((unsigned long) (utime_plus | lower_bits), key, iv);
         plaintext_len = decrypt(ciphertext, ciphertext_len, key, iv, plaintext);
         if (check_if_ascii(plaintext, plaintext_len))
           return plaintext_len;        
       }
       if (utime_minus){
-        get_key_iv((unsigned long) utime_minus & lower_bits, &key, &iv);
+        get_key_iv((unsigned long) utime_minus | lower_bits, &key, &iv);
         plaintext_len = decrypt(ciphertext, ciphertext_len, key, iv, plaintext);
         if (check_if_ascii(plaintext, plaintext_len))
           return plaintext_len;     
       }
     }
 
-    if (utime_plus)
+    if (utime_plus){
       utime_plus += utime_inc_value;
-    if (utime_minus)
+    }
+    if (utime_minus){
       utime_minus -= utime_inc_value; 
-    if (utime_minus && utime_plus){
+    }
+    if (utime_plus == 0 && utime_minus == 0 ){
       printf("FAILED\n");
       break; // NO KEY EXISTS
     }
@@ -160,7 +160,7 @@ int main(int argc, char *argv[]) {
   printf("%d\n", ciphertext_len);
 
   unsigned char* unencrypted = malloc(sizeof(unsigned char)*ciphertext_len);
-  force_decrypt(0x12340000, ciphertext, ciphertext_len, unencrypted);
+  force_decrypt(0x12350000, ciphertext, ciphertext_len, unencrypted);
   printf("%s\n", unencrypted);
   return 0;
 }
