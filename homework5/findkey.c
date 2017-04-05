@@ -94,12 +94,14 @@ unsigned int force_decrypt(int utime_start, unsigned char *ciphertext, int ciphe
       }
       if (utime_minus){
         unsigned int seed = (unsigned long) (utime_plus | lower_bits);
-        get_key_iv(seed, &key, &iv);
+        get_key_iv(seed, key, iv);
         plaintext_len = decrypt(ciphertext, ciphertext_len, key, iv, plaintext);
         if (check_if_ascii(plaintext, plaintext_len))
           return seed;
       }
     }
+
+    // printf("TEST %d %d\n", utime_plus, utime_minus);
 
     if (utime_plus){
       utime_plus += utime_inc_value;
