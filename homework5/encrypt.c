@@ -2,10 +2,8 @@
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <ctype.h>
-
-/**********
- * NOTE: This file cannot be compiled in its current state.
- */
+#include <stdio.h>
+#include <string.h>
 
 void handleErrors(void)
 {
@@ -100,8 +98,16 @@ int main(int argc, char *argv[]) {
   unsigned int utime_lo = (utime << 16) >> 16;
   unsigned char *plaintext;
   int plaintext_len;
-  unsigned char *ciphertext;
+  unsigned char *ciphertext = malloc(100);
   int ciphertext_len = 0;
+
+  FILE *fp = fopen("aes1.enc", "r");
+  fgets(ciphertext, 100, fp);
+//printf("%s", ciphertext);
+  puts("test");
+  ciphertext_len = strlen(ciphertext);
+  printf("%d", ciphertext_len);
+
 
   for (int hi = 0; hi + utime_hi < max_num && utime_hi - hi >= 0; ++hi) {
     for (int lo = 0; lo + utime_lo < max_num && utime_lo - lo >= 0; ++lo) {
