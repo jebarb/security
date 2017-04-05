@@ -70,21 +70,36 @@ int main(int argc, char *argv[]) {
       if (utime_hi + hi < max_num) {
         if (utime_lo + lo < max_num) {
           plaintext_len = encrypt(ciphertext, ciphertext_len, utime + hi + lo, plaintext);
-          if (!check_if_ascii(plaintext, plaintext_len))  {
-
-              }
-
-        if (utime_lo - lo > 0)
+          if (!check_if_ascii(plaintext, plaintext_len)) {
+            fwrite(plaintext, plaintext_len, 1, stdout);
+            return 0;
+          }
+        }
+        if (utime_lo - lo > 0) {
           plaintext_len = encrypt(ciphertext, ciphertext_len, utime + hi - lo, plaintext);
+          if (!check_if_ascii(plaintext, plaintext_len)) {
+            fwrite(plaintext, plaintext_len, 1, stdout);
+            return 0;
+          }
+        }
       }
       if (hi > 0 && utime_hi - hi > 0) {
-        if (utime_lo + lo < max_num)
+        if (utime_lo + lo < max_num) {
           plaintext_len = encrypt(ciphertext, ciphertext_len, utime - hi + lo, plaintext);
-        if (utime_lo - lo > 0)
+          if (!check_if_ascii(plaintext, plaintext_len)) {
+            fwrite(plaintext, plaintext_len, 1, stdout);
+            return 0;
+          }
+        }
+        if (utime_lo - lo > 0) {
           plaintext_len = encrypt(ciphertext, ciphertext_len, utime - hi - lo, plaintext);
+          if (!check_if_ascii(plaintext, plaintext_len)) {
+            fwrite(plaintext, plaintext_len, 1, stdout);
+            return 0;
+          }
+        }
       }
     }
   }
-
-  return 0;
+  return 1;
 }
