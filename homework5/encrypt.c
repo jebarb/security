@@ -53,43 +53,6 @@ int decrypt(unsigned char *ciphertext, int ciphertext_len, unsigned char *key,
   return plaintext_len;
 }
 
-int encrypt(unsigned char *plaintext, int plaintext_len, unsigned long seed, unsigned char *ciphertext)
-{
-  EVP_CIPHER_CTX *ctx;
-
-  int len, ciphertext_len;
-  int i;
-
-  // set random seed
-  srand(seed);
-
-  // create key and iv
-  unsigned char key[32], iv[16];
-  for (i = 0; i < 32; i++)
-    key[i] = rand() & 0xff;
-  for (i = 0; i < 16; i++)
-    iv[i] = rand() & 0xff;
-
-  /* Create and initialise the context */
-  if(!(ctx = EVP_CIPHER_CTX_new())) handleErrors();
-
-  // AES 256, CTR mode
-  if(1 != EVP_EncryptInit_ex(ctx, EVP_aes_256_ctr(), NULL, key, iv))
-    handleErrors();
-
-  if(1 != EVP_EncryptUpdate(ctx, ciphertext, &len, plaintext, plaintext_len))
-    handleErrors();
-  ciphertext_len = len;
-
-  if(1 != EVP_EncryptFinal_ex(ctx, ciphertext + len, &len)) handleErrors();
-  ciphertext_len += len;
-
-  /* Clean up */
-  EVP_CIPHER_CTX_free(ctx);
-
-  return ciphertext_len;
-}
-
 void get_key_iv(unsigned long seed, unsigned char *key, unsigned char *iv){
   // set random seed
   srand(seed);
@@ -107,7 +70,7 @@ int check_if_ascii(unsigned char *plaintext, int plaintext_len) {
   return 1;
 }
 
-int force_decrypt(int utime_start, unsigned char *ciphertext, int ciphertext_len, unsigned char *plaintext){
+unsigned int force_decrypt(int utime_start, unsigned char *ciphertext, int ciphertext_len, unsigned char *plaintext){
   /*
     Starting at the given timestamp, 
     iterate in both directions MODIFYING LOW ORDER BITS FIRST
@@ -123,16 +86,18 @@ int force_decrypt(int utime_start, unsigned char *ciphertext, int ciphertext_len
     // iterate over lower bits
     for (unsigned int lower_bits = 0; lower_bits <= 0xffff; lower_bits++){
       if (utime_plus){
-        get_key_iv((unsigned long) (utime_plus | lower_bits), key, iv);
+        unsigned int seed = (unsigned long) (utime_plus | lower_bits);
+        get_key_iv(seed, key, iv);
         plaintext_len = decrypt(ciphertext, ciphertext_len, key, iv, plaintext);
         if (check_if_ascii(plaintext, plaintext_len))
-          return plaintext_len;        
+          return seed;        
       }
       if (utime_minus){
-        get_key_iv((unsigned long) utime_minus | lower_bits, &key, &iv);
+        unsigned int seed = (unsigned long) (utime_plus | lower_bits);
+        get_key_iv(seed, &key, &iv);
         plaintext_len = decrypt(ciphertext, ciphertext_len, key, iv, plaintext);
         if (check_if_ascii(plaintext, plaintext_len))
-          return plaintext_len;     
+          return seed;
       }
     }
 
@@ -144,23 +109,42 @@ int force_decrypt(int utime_start, unsigned char *ciphertext, int ciphertext_len
     }
     if (utime_plus == 0 && utime_minus == 0 ){
       printf("FAILED\n");
-      break; // NO KEY EXISTS
+      return 0;
     }
   }
 }
 
 int main(int argc, char *argv[]) {
 
-  unsigned char *plaintext = (unsigned char*)"THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG";
-  unsigned int plaintext_len = 43;
+  if (argc != 3){
+    printf("Usage: ./findkey file.enc output.msg\n");
+    exit(1);
+  }
 
-  unsigned char *ciphertext = malloc(sizeof(unsigned char) * plaintext_len);
-  //unsigned char *plaintext, int plaintext_len, unsigned long seed, unsigned char *ciphertext
-  unsigned int ciphertext_len = encrypt(plaintext, plaintext_len, (unsigned long) 0x12345678, ciphertext);
-  printf("%d\n", ciphertext_len);
+  // OPEN FILES
+  unsigned char * input_name = argv[1];
+  unsigned char * output_name = argv[2];
+  FILE *ifile = fopen(input_name, "r");
+  FILE *ofile = fopen(output_name, "w");
 
-  unsigned char* unencrypted = malloc(sizeof(unsigned char)*ciphertext_len);
-  force_decrypt(0x12350000, ciphertext, ciphertext_len, unencrypted);
-  printf("%s\n", unencrypted);
+  // INPUT
+  fseek(ifile, 0, SEEK_END); 
+  long size = ftell(ifile); 
+  fseek(ifile , 0, SEEK_SET); 
+  unsigned char ciphertext[size];
+  fread(ciphertext, size, 1, ifile);
+  ciphertext[size] = '\0';
+  fclose(ifile);
+
+  // OUTPUT
+
+  unsigned char* unencrypted = malloc(sizeof(unsigned char)*size);
+  int seed = force_decrypt(time(NULL), ciphertext, (int)size, unencrypted);
+  
+  if (seed){
+    fprintf(ofile, "%s", unencrypted);
+    fclose(ofile);
+    printf("%x", seed);
+  }
   return 0;
 }
