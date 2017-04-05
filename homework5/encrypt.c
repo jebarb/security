@@ -137,7 +137,6 @@ int main(int argc, char *argv[]) {
   fclose(ifile);
 
   // OUTPUT
-
   unsigned char* unencrypted = malloc(sizeof(unsigned char)*size);
   int seed = force_decrypt(time(NULL), ciphertext, (int)size, unencrypted);
   
