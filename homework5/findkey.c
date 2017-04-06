@@ -15,7 +15,7 @@ void handleErrors(void)
 }
 
 int decrypt(unsigned char *ciphertext, int ciphertext_len, unsigned char *key,
-    unsigned char *iv, unsigned char *plaintext)
+  unsigned char *iv, unsigned char *plaintext)
 {
   EVP_CIPHER_CTX *ctx;
 
@@ -72,16 +72,16 @@ int check_if_ascii(unsigned char *plaintext, int plaintext_len) {
 
 unsigned int force_decrypt(int utime_start, unsigned char *ciphertext, int ciphertext_len, unsigned char *plaintext){
   /*
-     Starting at the given timestamp, 
-     iterate in both directions MODIFYING LOW ORDER BITS FIRST
-     */
+    Starting at the given timestamp, 
+    iterate in both directions MODIFYING LOW ORDER BITS FIRST
+  */
   unsigned int utime_upper = utime_start & 0xffff0000; // Mask off lower 16
   unsigned int utime_inc_value = 0x00010000; // 2^16
   unsigned int utime_plus = utime_upper;
   unsigned int utime_minus = utime_upper - utime_inc_value;
   unsigned int plaintext_len;
   unsigned char key[32], iv[16];
-
+  
   while (1){
     // iterate over lower bits
     for (unsigned int lower_bits = 0; lower_bits <= 0xffff; lower_bits++){
@@ -90,16 +90,18 @@ unsigned int force_decrypt(int utime_start, unsigned char *ciphertext, int ciphe
         get_key_iv(seed, key, iv);
         plaintext_len = decrypt(ciphertext, ciphertext_len, key, iv, plaintext);
         if (check_if_ascii(plaintext, plaintext_len))
-          return seed;
+          return seed;        
       }
       if (utime_minus){
-        unsigned int seed = (unsigned long) (utime_plus | lower_bits);
+        unsigned int seed = (unsigned long) (utime_minus | lower_bits);
         get_key_iv(seed, key, iv);
         plaintext_len = decrypt(ciphertext, ciphertext_len, key, iv, plaintext);
         if (check_if_ascii(plaintext, plaintext_len))
           return seed;
       }
     }
+
+    // printf("TEST %d %d\n", utime_plus, utime_minus);
 
     if (utime_plus){
       utime_plus += utime_inc_value;
@@ -125,6 +127,7 @@ int main(int argc, char *argv[]) {
   unsigned char * input_name = argv[1];
   unsigned char * output_name = argv[2];
   FILE *ifile = fopen(input_name, "r");
+  FILE *ofile = fopen(output_name, "w");
 
   // INPUT
   fseek(ifile, 0, SEEK_END); 
@@ -138,13 +141,11 @@ int main(int argc, char *argv[]) {
   // OUTPUT
   unsigned char* unencrypted = malloc(sizeof(unsigned char)*size);
   int seed = force_decrypt(time(NULL), ciphertext, (int)size, unencrypted);
-
+  
   if (seed){
-    // puts(unencrypted);
-    FILE *ofile = fopen(output_name, "w");
     fprintf(ofile, "%s", unencrypted);
     fclose(ofile);
-    printf("%x\n", seed);
+    printf("%x", seed);
   }
   return 0;
 }
