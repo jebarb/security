@@ -1,0 +1,20 @@
+#!/usr/bin/python3
+import hashlib
+import sys
+
+
+def so_salty():  # process input and output
+    user = sys.argv[1]
+    pword = sys.argv[2]
+    expected = sys.argv[3]
+    for s1 in range(32, 127):
+        for s2 in range(32, 127):
+            salt = ''.join([chr(s1), chr(s2)])
+            salted = ''.join([salt, ":", user, ":", pword])
+            res = hashlib.sha1(salted.encode('utf-8')).hexdigest()
+            if res == expected:
+                print(salt)
+                return
+
+
+so_salty()
