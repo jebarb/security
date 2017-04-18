@@ -2,6 +2,7 @@
 import fileinput
 import hashlib
 import sys
+import binascii
 
 filein = open(sys.argv[1])
 tocrack = {}
@@ -14,11 +15,10 @@ for line in filein:
     sha1 = line[0]
     tocrack[uname] = sha1
 for line in fileinput.input(0):
-    line = line.rstrip('\n').encode('utf-8')
-    uname = uname.encode('utf-8')
+    line = line.rstrip('\n')
     found = []
     for uname, sha1 in tocrack.items():
-        if hashlib.md5(uname + hashlib.sha1(uname + hashlib.md5(line))).hexdigest() == sha1:
+        if hashlib.md5(uname + hashlib.sha1(uname + hashlib.md5(line).hexdigest()).hexdigest()).hexdigest() == sha1:
             print(uname + " " + line)
             found.append(uname)
     for i in found:
