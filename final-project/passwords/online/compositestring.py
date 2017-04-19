@@ -1,81 +1,47 @@
 #!/usr/bin/python3
-import fileinput
-import copy
+import hashlib
+import sys
 
-words = ['June', 
-        'june', 
-        'JanWerner',
-        'janwerner',
-        'Jan', 
-        'jan', 
-        'Werner', 
-        'werner',
-        'jjwerner', 
-        'Male',
-        'male',
-        'ResearchEngineer',
-        'researchengineer',
-        'Research', 
-        'research', 
-        'Engineer', 
-        'engineer', 
-        'ChapelHill',
-        'chapelhill',
-        'Chapel',
-        'chapel',
-        'Hill',
-        'hill',
-        'UniversityofNorthCarolinaatChapelHill',
-        'UniversityOfNorthCarolinaAtChapelHill',
-        'universityofnorthcarolinaatchapelhill',
-        'UniversityofNorthCarolinaChapelHill',
-        'UniversityOfNorthCarolinaChapelHill',
-        'universityofnorthcarolinachapelhill',
-        'UniversityNorthCarolinaChapelHill', 
-        'universitynorthcarolinachapelhill',
-        'UniversityofNorthCarolina',
-        'universityofnorthcarolina',
-        'UniversityNorthCarolina',
-        'universitynorthcarolina',
-        'NorthCarolina',
-        'northcarolina',
-        'University',
-        'university'
-        'North',
-        'north',
-        'Carolina',
-        'carolina',
-        'UNCCH', 
-        'uncch', 
-        'UNC', 
-        'unc', 
-        'VanderbiltUniversity', 
-        'vanderbiltuniversity', 
-        'Vanderbilt',
-        'vanderbilt',
-        'VU', 
-        'vu', 
-        'NicolausCopernicusUniversity', 
-        'nicolauscopernicusuniversity', 
-        'NicolausCopernicus',
-        'nicolauscopernicus', 
-        'Nicolaus', 
-        'nicolaus', 
-        'Copernicus',
-        'copernicus',
-        'NCU', 
-        'ncu']
-endings = ['6', '06', '617', '0617', '17']
-newwords = []
+words = ['Foil',
+         'foil',
+         'Right',
+         'right',
+         'Hand',
+         'hand',
+         'Westborough',
+         'westborough',
+         'Mass',
+         'mass',
+         'Massachusets',
+         'massachusets',
+         'MA',
+         'Fencing',
+         'fencing',
+         'UNC']
+endings = ['5',
+           '7',
+           '57',
+           '2013',
+           '2014',
+           '13',
+           '14']
+uname = 'drdesai'
+passhash = 'db5dba470848fff60c31a329285149d6'
 
-idx1 = 0
+
+def hashit(line):
+    md51 = hashlib.md5(line.encode('utf-8')).hexdigest()
+    sha1 = hashlib.sha1((uname + str(md51)).encode('utf-8')).hexdigest()
+    hashed = hashlib.md5((uname + str(sha1)).encode('utf-8')).hexdigest()
+    if hashed == passhash:
+        print(uname + " " + line)
+        sys.exit(0)
+
+
 for word in words:
     for end in endings:
-        print(''.join([word, end]))
+        hashit(''.join([word, end]))
         for word2 in words:
-            print(''.join([word, word2, end]))
-            # for word3 in words:
-            #     print(''.join([word, word2, word3, end]))
-
-
-
+            hashit(''.join([word, word2, end]))
+            for word3 in words:
+                hashit(''.join([word, word2, word3, end]))
