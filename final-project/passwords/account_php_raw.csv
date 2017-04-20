@@ -1,0 +1,119 @@
+<?php include('header.php'); 
+
+if (!isset($_SESSION['logged_in'])) {
+  echo 'Permission denied';
+  die();
+}
+
+?>
+
+<div class="onecol">
+
+
+<?php
+$dbh = new mysqli('localhost',"superdbadmin","supersecure","secureweb");
+	if(mysqli_connect_errno()) {
+	echo "MySQL Connection Failed: " . mysqli_connect_errno();
+die();
+}
+$query = "SELECT userid,username,firstname,lastname,aboutme FROM users WHERE username='".$_SESSION['user']."'";
+$result=$dbh->query($query);
+$num=$result->num_rows;
+if ($num <= 0) {
+ echo 'a database error occurred';
+ die();
+}
+$row = $result->fetch_assoc();
+$username=$row['username'];
+$userid=$row['userid'];
+$firstname=$row['firstname'];
+$lastname=$row['lastname'];
+$aboutme=$row['aboutme'];
+?>
+
+<p>
+<h2>Your account Information
+User: <?php echo $username; ?>
+</h2>
+</p>
+Publisher API Key: <?php
+
+# Verify the user has the right to an API key
+if (!isset($_COOKIE['APIKEY_TOKEN'])) {
+  echo 'Cookies were tampered with...';
+  session_unset();
+  die();
+}
+$decrypted = rtrim(
+  openssl_decrypt($_COOKIE['APIKEY_TOKEN'], 'aes-128-cbc', $_SESSION['APIKEY_TOKEN_key'],
+                  False, $_SESSION['APIKEY_TOKEN_iv']), "\0");
+if (!strcmp($decrypted,'== SecureToken LoggedIn=True Publisher=True == ')) {
+# If the user is a valid publisher, grab their API key from the database
+  $query = "SELECT api_keys.key FROM api_keys WHERE userid=".$_SESSION['userid'];
+  $result=$dbh->query($query);
+  $num=$result->num_rows;
+  if ($num <= 0) {
+   echo 'a database error occurred';
+   die();
+  }
+
+  $row = $result->fetch_assoc();
+  $apikey=$row['key'];
+  echo $apikey;
+  echo "<br>";
+$logged_msg = "LOGIN:" . $_POST['user'] . " from " . $_SERVER['REMOTE_ADDR'] . " " . $_SERVER['HTTP_USER_AGENT'] . " obtained APIKEY_TOKEN";
+error_log($logged_msg);
+} 
+else {
+  echo '<b>Your account is past-due, we have disabled your API key!</b><br>';
+}
+?>
+<br>
+<?php
+echo "Safe 2 access: ";
+if (!isset($_COOKIE['SAFE2_TOKEN'])) {
+  echo 'Cookies were tampered with...';
+  session_unset();
+  die();
+}
+$decrypted = rtrim(
+  openssl_decrypt($_COOKIE['SAFE2_TOKEN'], 'aes-128-cbc', $_SESSION['SAFE2_TOKEN_key'],
+                  False, $_SESSION['SAFE2_TOKEN_iv']), "\0");
+if (strlen(strstr($decrypted,'Safe2=Open'))>0) {
+# If the has the permission to open Safe2 grab the combo 
+  $query = "SELECT safe_combo FROM fabian";
+  $result=$dbh->query($query);
+  $num=$result->num_rows;
+  if ($num <= 0) {
+    echo 'a database error occurred';
+    die();
+  }
+
+  $row = $result->fetch_assoc();
+  $combo=$row['safe_combo'];
+$logged_msg = "LOGIN:" . $_POST['user'] . " from " . $_SERVER['REMOTE_ADDR'] . " " . $_SERVER['HTTP_USER_AGENT'] . " obtained SAFE2_TOKEN";
+error_log($logged_msg);
+  echo "Combo to open the safe: " .$combo;
+} else {
+ echo '<b>Your account is not authorized to open the safe!</b><br>';
+}
+?>
+<br>
+<?php
+echo "Project notes:<br><br>";
+  $query = "SELECT notes FROM notes WHERE userid=".$_SESSION['userid'];
+  $result = $dbh->query($query);
+  $num = $result->num_rows;
+  if ($num <= 0) {
+    echo 'No results';
+  }
+  else {
+    $row = $result->fetch_assoc();
+    $usernote = $row['notes'];
+    echo "<h4>" . $usernote . "</h4>";
+  }
+?>
+
+</div>
+
+<?php include('footer.php'); ?>
