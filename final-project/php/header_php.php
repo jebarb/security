@@ -9,8 +9,10 @@ if (!isset($_SESSION['initiated'])) {
 # Protect against 'session hijacking' :)
 if (isset($_SESSION['HTTP_USER_AGENT'])) {
  if ($_SESSION['HTTP_USER_AGENT'] != md5($_SERVER['HTTP_USER_AGENT']))
+  # if user agent has changed...
   session_unset();
  else
+  # this seems stupid
   $_SESSION['HTTP_USER_AGENT'] = md5($_SERVER['HTTP_USER_AGENT']);
 }
 # Logout, if requested
