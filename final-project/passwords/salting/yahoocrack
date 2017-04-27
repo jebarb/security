@@ -1,8 +1,0 @@
-#!/bin/bash
-(
-john --wordlist=./cracklib-small --stdout;
-john --wordlist=/usr/share/dict/words --stdout;
-john --wordlist=/usr/share/dict/words --rules --stdout;
-john --wordlist --rules sony_pwdump --stdout;
-john --markov sony_pwdump --stdout
-) 2>/dev/null | ./hashit.py $1
